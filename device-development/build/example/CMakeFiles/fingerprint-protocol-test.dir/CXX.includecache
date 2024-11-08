@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../src/fingerprint/fingerprint-protocol.h
+vector
+-
+iostream
+-
+stdint.h
+-
+stdio.h
+-
+
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/example/fingerprint/fingerprint-protocol-test.cpp
+fingerprint-protocol.h
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/example/fingerprint/fingerprint-protocol.h
+

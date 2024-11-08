@@ -1,0 +1,10 @@
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/CMakeFiles/rebuild_cache.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/CMakeFiles/edit_cache.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/src/CMakeFiles/rebuild_cache.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/src/CMakeFiles/smart_dev.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/src/CMakeFiles/edit_cache.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/example/CMakeFiles/edit_cache.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/example/CMakeFiles/linux-uart-test.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/example/CMakeFiles/rebuild_cache.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/example/CMakeFiles/fingerprint-protocol-test.dir
+/home/linux/imx6ull-iot-smart-car/fs/ubuntu-rootfs/smarthome/device-development/build/example/CMakeFiles/fingerprint-device-test.dir

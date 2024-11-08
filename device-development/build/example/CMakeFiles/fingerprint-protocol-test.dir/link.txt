@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/fingerprint-protocol-test.dir/fingerprint/fingerprint-protocol-test.cpp.o  -o fingerprint-protocol-test ../src/libsmart_dev.a 

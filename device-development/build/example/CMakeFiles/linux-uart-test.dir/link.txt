@@ -1,0 +1,1 @@
+/usr/bin/c++     CMakeFiles/linux-uart-test.dir/linux-uart/linux-uart-test.cpp.o  -o linux-uart-test ../src/libsmart_dev.a 

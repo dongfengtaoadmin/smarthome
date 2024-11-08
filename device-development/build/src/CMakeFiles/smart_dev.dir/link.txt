@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsmart_dev.a  CMakeFiles/smart_dev.dir/linux-uart/linux-uart.cpp.o CMakeFiles/smart_dev.dir/fingerprint/fingerprint-device.cpp.o CMakeFiles/smart_dev.dir/fingerprint/fingerprint-protocol.cpp.o
+/usr/bin/ranlib libsmart_dev.a
