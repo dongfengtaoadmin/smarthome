@@ -1,4 +1,5 @@
 #include "fingerprint-device.h"
+#include <unistd.h>
 
 FingerprintDevice::FingerprintDevice(const string &device) : uart(device, 57600)
 {
@@ -118,4 +119,316 @@ bool FingerprintDevice::detectImage(void)
 #endif
     // 验证数据位是不是  0
     return ackProtocol.getPacketData()[0] ? false : true;
+}
+
+bool FingerprintDevice::generateImageFeature(uint8_t bufferID)
+{
+    FingerprintProtocol reqProtocol = FingerprintProtocol::makeImageFeatureProtocol(bufferID);
+    bool ok = sendPacket(reqProtocol.getPacket());
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to sendPacket\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------send packet-------------\n");
+    reqProtocol.showPacket();
+#endif
+
+    vector<uint8_t> ackPacket;
+    ok = recvPacket(ackPacket);
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to recvPacket\n");
+        return false;
+    }
+
+    FingerprintProtocol ackProtocol = FingerprintProtocol::fromProtocolPacket(ackPacket);
+    if (ackProtocol.isPacketError())
+    {
+        fprintf(stderr, "recv packet is error\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------recv packet-------------\n");
+    ackProtocol.showPacket();
+#endif
+
+    return ackProtocol.getPacketData()[0] ? false : true;
+}
+
+bool FingerprintDevice::generateImageTemplate(void)
+{
+    FingerprintProtocol reqProtocol = FingerprintProtocol::makeImageTemplateProtocol();
+    bool ok = sendPacket(reqProtocol.getPacket());
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to sendPacket\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------send packet-------------\n");
+    reqProtocol.showPacket();
+#endif
+
+    vector<uint8_t> ackPacket;
+    ok = recvPacket(ackPacket);
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to recvPacket\n");
+        return false;
+    }
+
+    FingerprintProtocol ackProtocol = FingerprintProtocol::fromProtocolPacket(ackPacket);
+    if (ackProtocol.isPacketError())
+    {
+        fprintf(stderr, "recv packet is error\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------recv packet-------------\n");
+    ackProtocol.showPacket();
+#endif
+
+    return ackProtocol.getPacketData()[0] ? false : true;
+}
+
+/**
+ * 存储指纹
+ */
+bool FingerprintDevice::storeImageTemplate(uint16_t pos)
+{
+    FingerprintProtocol reqProtocol = FingerprintProtocol::makeStoreTemplateProtocol(pos);
+    bool ok = sendPacket(reqProtocol.getPacket());
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to sendPacket\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------send packet-------------\n");
+    reqProtocol.showPacket();
+#endif
+
+    vector<uint8_t> ackPacket;
+    ok = recvPacket(ackPacket);
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to recvPacket\n");
+        return false;
+    }
+
+    FingerprintProtocol ackProtocol = FingerprintProtocol::fromProtocolPacket(ackPacket);
+    if (ackProtocol.isPacketError())
+    {
+        fprintf(stderr, "recv packet is error\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------recv packet-------------\n");
+    ackProtocol.showPacket();
+#endif
+
+    return ackProtocol.getPacketData()[0] ? false : true;
+}
+
+/**
+ * 存储指纹整体流程 1、录指纹两次，2、生成两次特征码，3、特征合成模版，4、存到某一页
+ */
+bool FingerprintDevice::recordFingerprint(uint16_t pos)
+{
+    // 先第1次探测验证是否成功
+    bool ok = false;
+    for (int i = 0; i < 3; i++)
+    {
+        ok = detectImage();
+        if (ok)
+        {
+            break;
+        }
+        sleep(1); // 每次给的时间 是1秒
+    }
+    // 把特征码 存放在  buffer1
+    ok = generateImageFeature(0x1);
+    if (!ok)
+    {
+        return false;
+    }
+
+    // 先第2次探测验证是否成功
+    bool ok = false;
+    for (int i = 0; i < 3; i++)
+    {
+        ok = detectImage();
+        if (ok)
+        {
+            break;
+        }
+        sleep(1); // 每次给的时间 是1秒
+    }
+    // 把特征码 存放在  buffer2
+    ok = generateImageFeature(0x2);
+    if (!ok)
+    {
+        return false;
+    }
+    // 特征合成模版
+    ok = generateImageTemplate();
+    if (!ok)
+    {
+        return false;
+    }
+    return storeImageTemplate(pos);
+
+    return false;
+}
+
+bool FingerprintDevice::searchFingerprint(uint16_t &pos)
+{
+    FingerprintProtocol reqProtocol = FingerprintProtocol::makeSearchFingerprintProtocol();
+    bool ok = sendPacket(reqProtocol.getPacket());
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to sendPacket\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------send packet-------------\n");
+    reqProtocol.showPacket();
+#endif
+
+    vector<uint8_t> ackPacket;
+    ok = recvPacket(ackPacket);
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to recvPacket\n");
+        return false;
+    }
+
+    FingerprintProtocol ackProtocol = FingerprintProtocol::fromProtocolPacket(ackPacket);
+    if (ackProtocol.isPacketError())
+    {
+        fprintf(stderr, "recv packet is error\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------recv packet-------------\n");
+    ackProtocol.showPacket();
+#endif
+
+    uint8_t *data = ackProtocol.getPacketData();
+    if (data[0] != 0)
+    {
+        return false;
+    }
+    // 合并成一个 两个字节的 页码给 pos 指针
+    pos = (data[1] << 8) | data[2];
+
+    return true;
+}
+
+// 验证指纹流程： 1、录指纹图像 2、生成特征码 3、搜索指纹
+bool FingerprintDevice::verfiyFingerprint(uint16_t &pos)
+{
+    // 1、录指纹图像
+    bool ok = false;
+    for (int i = 0; i < 3; i++)
+    {
+        ok = detectImage();
+        if (ok)
+        {
+            break;
+        }
+        sleep(1); //
+    }
+
+    // 2、生成特征码
+    ok = generateImageFeature(0x1);
+    if (!ok)
+    {
+        return false;
+    }
+    // 3、搜索指纹
+    return searchFingerprint(pos);
+}
+
+/**
+ * 要删除的模版号
+ */
+bool FingerprintDevice::deleteFingerprint(const uint16_t pos)
+{
+    FingerprintProtocol reqProtocol = FingerprintProtocol::makeDeleteFingerprintProtocol(pos);
+    bool ok = sendPacket(reqProtocol.getPacket());
+    if(!ok){
+        fprintf(stderr,"Fail to sendPacket\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------send packet-------------\n");
+    reqProtocol.showPacket();
+#endif 
+
+    vector<uint8_t> ackPacket;
+    ok = recvPacket(ackPacket);
+    if(!ok){
+        fprintf(stderr,"Fail to recvPacket\n");
+        return false;
+    }    
+    
+    FingerprintProtocol ackProtocol = FingerprintProtocol::fromProtocolPacket(ackPacket);
+    if(ackProtocol.isPacketError()){
+        fprintf(stderr,"recv packet is error\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------recv packet-------------\n");
+    ackProtocol.showPacket();
+#endif 
+
+    return ackProtocol.getPacketData()[0] ? false:true;
+}
+
+bool FingerprintDevice::clearFingerprintLib(void)
+{
+    FingerprintProtocol reqProtocol = FingerprintProtocol::makeClearFingerprintLibProtocol();
+    bool ok = sendPacket(reqProtocol.getPacket());
+    if(!ok){
+        fprintf(stderr,"Fail to sendPacket\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------send packet-------------\n");
+    reqProtocol.showPacket();
+#endif 
+
+    vector<uint8_t> ackPacket;
+    ok = recvPacket(ackPacket);
+    if(!ok){
+        fprintf(stderr,"Fail to recvPacket\n");
+        return false;
+    }    
+    
+    FingerprintProtocol ackProtocol = FingerprintProtocol::fromProtocolPacket(ackPacket);
+    if(ackProtocol.isPacketError()){
+        fprintf(stderr,"recv packet is error\n");
+        return false;
+    }
+
+#ifdef FINGERPRINT_DEVICE_DEBUG
+    printf("----------recv packet-------------\n");
+    ackProtocol.showPacket();
+#endif 
+
+    return ackProtocol.getPacketData()[0] ? false:true;
 }

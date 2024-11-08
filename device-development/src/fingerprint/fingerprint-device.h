@@ -14,15 +14,22 @@ public:
     bool handshake(void);
     // 探测手指图像
     bool detectImage(void);
-    // // 生成模版
-    // bool generateImageFeature(uint8_t bufferID);
-    // bool generateImageTemplate(void);
-    // bool storeImageTemplate(uint16_t pos);
-    // bool recordFingerprint(uint16_t pos);
-    // bool searchFingerprint(uint16_t &pos);
-    // bool verfiyFingerprint(uint16_t &pos);
-    // bool deleteFingerprint(const uint16_t pos);
-    // bool clearFingerprintLib(void);
+    // 生成特征码
+    bool generateImageFeature(uint8_t bufferID);
+    // 生成模版
+    bool generateImageTemplate(void);
+    // 存储指纹
+    bool storeImageTemplate(uint16_t pos);
+    // 存储指纹整体流程 1、录指纹两次，2、生成两次特征码，3、特征合成模版，4、存到某一页
+    bool recordFingerprint(uint16_t pos);
+    // 搜索指纹
+    bool searchFingerprint(uint16_t &pos);
+    // 验证指纹流程： 1、录指纹图像 2、生成特征码 3、搜索指纹
+    bool verfiyFingerprint(uint16_t &pos);
+    // 删除指纹
+    bool deleteFingerprint(const uint16_t pos);
+    // 清空指纹
+    bool clearFingerprintLib(void);
 
 private:
     LinuxUart uart;

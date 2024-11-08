@@ -232,6 +232,9 @@ FingerprintProtocol FingerprintProtocol::makeImageFeatureProtocol(uint8_t buffer
     return protocol;
 }
 
+/**
+ * 生成模版
+ */
 FingerprintProtocol FingerprintProtocol::makeImageTemplateProtocol(void)
 {
     FingerprintProtocol protocol;
