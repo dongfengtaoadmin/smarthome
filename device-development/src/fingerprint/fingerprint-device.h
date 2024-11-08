@@ -30,6 +30,8 @@ public:
     bool deleteFingerprint(const uint16_t pos);
     // 清空指纹
     bool clearFingerprintLib(void);
+    // 判断指纹是否被触摸了
+    bool isTouchState(void);
 
 private:
     LinuxUart uart;

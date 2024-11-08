@@ -1,5 +1,8 @@
 #include "fingerprint-device.h"
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
 
 FingerprintDevice::FingerprintDevice(const string &device) : uart(device, 57600)
 {
@@ -367,68 +370,131 @@ bool FingerprintDevice::deleteFingerprint(const uint16_t pos)
 {
     FingerprintProtocol reqProtocol = FingerprintProtocol::makeDeleteFingerprintProtocol(pos);
     bool ok = sendPacket(reqProtocol.getPacket());
-    if(!ok){
-        fprintf(stderr,"Fail to sendPacket\n");
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to sendPacket\n");
         return false;
     }
 
 #ifdef FINGERPRINT_DEVICE_DEBUG
     printf("----------send packet-------------\n");
     reqProtocol.showPacket();
-#endif 
+#endif
 
     vector<uint8_t> ackPacket;
     ok = recvPacket(ackPacket);
-    if(!ok){
-        fprintf(stderr,"Fail to recvPacket\n");
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to recvPacket\n");
         return false;
-    }    
-    
+    }
+
     FingerprintProtocol ackProtocol = FingerprintProtocol::fromProtocolPacket(ackPacket);
-    if(ackProtocol.isPacketError()){
-        fprintf(stderr,"recv packet is error\n");
+    if (ackProtocol.isPacketError())
+    {
+        fprintf(stderr, "recv packet is error\n");
         return false;
     }
 
 #ifdef FINGERPRINT_DEVICE_DEBUG
     printf("----------recv packet-------------\n");
     ackProtocol.showPacket();
-#endif 
+#endif
 
-    return ackProtocol.getPacketData()[0] ? false:true;
+    return ackProtocol.getPacketData()[0] ? false : true;
 }
 
 bool FingerprintDevice::clearFingerprintLib(void)
 {
     FingerprintProtocol reqProtocol = FingerprintProtocol::makeClearFingerprintLibProtocol();
     bool ok = sendPacket(reqProtocol.getPacket());
-    if(!ok){
-        fprintf(stderr,"Fail to sendPacket\n");
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to sendPacket\n");
         return false;
     }
 
 #ifdef FINGERPRINT_DEVICE_DEBUG
     printf("----------send packet-------------\n");
     reqProtocol.showPacket();
-#endif 
+#endif
 
     vector<uint8_t> ackPacket;
     ok = recvPacket(ackPacket);
-    if(!ok){
-        fprintf(stderr,"Fail to recvPacket\n");
+    if (!ok)
+    {
+        fprintf(stderr, "Fail to recvPacket\n");
         return false;
-    }    
-    
+    }
+
     FingerprintProtocol ackProtocol = FingerprintProtocol::fromProtocolPacket(ackPacket);
-    if(ackProtocol.isPacketError()){
-        fprintf(stderr,"recv packet is error\n");
+    if (ackProtocol.isPacketError())
+    {
+        fprintf(stderr, "recv packet is error\n");
         return false;
     }
 
 #ifdef FINGERPRINT_DEVICE_DEBUG
     printf("----------recv packet-------------\n");
     ackProtocol.showPacket();
-#endif 
+#endif
 
-    return ackProtocol.getPacketData()[0] ? false:true;
+    return ackProtocol.getPacketData()[0] ? false : true;
+}
+
+// 读取管脚电平状态 就知道是不是被触摸了
+bool FingerprintDevice::isTouchState(void)
+{
+
+    // 这两种写法的主要区别在于文件名的类型和可变性：
+
+    // 第一种写法：
+    // string filename = "/sys/class/gpio/gpio134/value";
+    // FILE *fp = fopen(filename.c_str(), "r");
+    // 类型：filename 是一个 std::string 对象。
+    // 用法：std::string 提供了许多字符串处理功能，可以方便地进行拼接、查找、替换等操作。
+    // 转换：fopen 函数接受 const char* 参数，因此在使用 filename 时需要调用 .c_str() 方法将 std::string 转换为 C 风格的字符串（const char*）。
+    // 优点：可以利用 std::string 类的各种方法来灵活处理字符串内容（如动态生成文件名或处理路径等），非常适合需要动态构建字符串的情况。
+
+    // 第二种写法：
+
+    // const char *filename = "/sys/class/gpio/gpio134/value";
+    // FILE *fp = fopen(filename, "r");
+    // 类型：filename 是一个 const char*，指向 C 风格的字符串。
+    // 不可变性：const char* 是一个指针，指向字符串字面量（在程序的常量区存储）。这种字符串通常是只读的。
+    // 直接使用：由于 filename 本身已经是 const char*，可以直接传递给 fopen，无需转换。
+    // 优点：占用的内存较小，且性能稍微好一些，因为它避免了从 std::string 到 const char* 的转换。适用于文件路径是固定的情况。
+
+    // 总结
+    // 如果文件名是固定的、不需要修改，使用 const char* 更简单、直接。
+    // 如果文件名需要动态生成或修改，使用 std::string 更灵活。
+
+    const char *filename = "/sys/class/gpio/gpio134/value"; // 定义 GPIO 134 的电平状态文件的路径
+
+    FILE *fp = fopen(filename, "r"); // 尝试以只读模式打开电平状态文件
+
+    if (fp != nullptr) // 如果文件成功打开（fp 不为 nullptr），则跳过内部的 `if` 代码块
+    {
+        // 判断文件打开失败的原因是否是文件不存在（errno == ENOENT）
+        if (errno == ENOENT)
+        {
+            system("echo 134 > /sys/class/gpio/export");           // 导出 GPIO 134，使其可以通过 /sys/class/gpio/gpio134 访问
+            system("echo in > /sys/class/gpio/gpio134/direction"); // 将 GPIO 134 的方向设置为输入模式
+
+            fp = fopen(filename, "r"); // 再次尝试以只读模式打开电平状态文件
+
+            if (errno == ENOENT) // 如果仍然失败，并且原因是文件不存在，则输出错误信息
+            {
+                fprintf(stderr, "Fail to fopen %s: %s\n", filename, strerror(errno)); // 打印错误信息
+                return false;                                                         // 返回 false 表示操作失败
+            }
+        }
+    }
+
+    // 读取 GPIO 电平状态
+    int leve = fgetc(fp); // 使用 fgetc 从文件中读取一个字符，表示电平状态（'1' 为高电平，'0' 为低电平）
+
+    fclose(fp); // 关闭文件
+
+    return leve == '1' ? true : false; // 返回电平状态，如果是 '1' 则返回 true，否则返回 false
 }

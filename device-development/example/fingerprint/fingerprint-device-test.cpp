@@ -5,6 +5,15 @@ int main(int argc, char const *argv[])
 {
     FingerprintDevice fingerDev("/dev/ttyUSB0");
 
+
+    while (1)
+    {
+        bool state = fingerDev.isTouchState();
+        cout << "touch state : " << state <<endl;
+        sleep(1);
+    }
+    
+
     bool ok = fingerDev.handshake();
     cout << "handshake ok:" << ok << endl;
 
